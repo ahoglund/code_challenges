@@ -17,6 +17,7 @@ class StreakCalculator
         if current_streak.length > @longest_streak
           @longest_streak = current_streak.length
         end
+        # reset the streak
         current_streak = []
       end
     end
