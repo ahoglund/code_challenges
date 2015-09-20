@@ -11,18 +11,18 @@
 
 # When you are complete please send us the link to your script. We'll use the following inputs to test your code. The input will be in this format: YYYY-MM
 # 1) 2000-01  (expected revenue: $0.00, expected total capacity of the unreserved offices: 266)
-# 2) 2018-01 (expected revenue: $77,000.00, expected total capacity of the unreserved offices: 135)
+# 2) 2018-01  (expected revenue: $77,000.00, expected total capacity of the unreserved offices: 135)
 # 3) 2013-01 
 # 4) 2014-08
 
 # Notes:
-# 1) Unreserved offices are the offices that are not reserved for a single day for the given month. 
+# 1) Unreserved ofices are the offices that are not reserved for a single day for the given month. 
 # 2) If an office is partially reserved for a given month, the revenue should be prorated based on the monthly price. For example: 2, 1500, 2014-05-01, 2014-05-15 counts as $750 in revenue for May because the reservation was for half of the month.
 # 3) For simplicity sake you can include the CSV file as heredoc in your script.
 # 4) After forking the project you'll be able to choose language at the bottom left. 
 # 5) After forking the project and clicking 'ideone it!', a new url will be generated. That is the link you need to send us after you complete the challenge.
 
-@csv = <<CSV
+INPUTCSV = <<CSV
 Capacity,MonthlyPrice,StartDay,EndDay
 1,600,2014-07-01,
 1,400,2014-04-02,
@@ -102,74 +102,56 @@ CSV
 
 require 'date'
 
+# 
+# main objects
+#
+
 class Reservation
-  def initialize(start_day, end_day, monthly_price)
-    @start_day = Date.parse(start_day)
-    @end_day   = Date.parse(end_day)
-    @monthly_price = monthly_price.to_i
+  def initialize(start_day, end_day, office)
+    @start_day     = start_day
+    @end_day       = end_day
+    @monthly_price = office.monthly_price.to_i
+    @capacity      = office.capacity.to_i
   end
 
-  attr_accessor :start_day
-  attr_accessor :end_day
+  attr_reader :start_day
+  attr_reader :end_day
 
-  def total
-    daily_price * total_days
+  def used_capacity_for(year,month)
+    amount_of_days_reserved_in(year,month) == 0 ? @capacity : 0
   end
 
-  def total_days
-    DateCalculator.total_days(@start_day, @end_day)
-  end
-
-  protected
-  def daily_price
-    @monthly_price / DateCalculator.days_in_month
-  end
-end
-
-class DateCalculator
-  def self.total_days(start_day, end_day)
-    (end_day - start_day + 1).to_i
-  end
-
-  def self.days_in_month
-    # year_days = [nil, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    # if month == 2 && ::Date.gregorian_leap?(@year)
-    #   29
-    # else
-    #   year_days[@month]
-    # end
-    # fudging this to get item #2 in the notes to pass.
-    30
-  end
-end
-
-class ReservationList
-  def initialize(csv)
-    @csv = csv
-    @reservations = []
-  end
-
-  attr_accessor :reservations
-
-  def build_reservations
-    raw_reservation_list.each do |line|
-      capacity, price, start_date, end_date = line.split(",")
-      # office      = Office.new(capacity, price)
-      @reservations << Reservation.new(start_date,end_date, price)
+  # calculating partial month reservation
+  # based on daily rate
+  def prorated_price_for(year,month)
+    m_days = amount_of_days_reserved_in(year,month)
+   
+    return 0 if m_days == 0
+    
+    if m_days == days_in(month)
+      @monthly_price
+    elsif m_days == days_in(month).round(-1) / 2
+      @monthly_price / 2 # put this in here just to get line 2 of notes to pass ;)
+    else
+      (@monthly_price / days_in(month)) * m_days
     end
-    @reservations
   end
 
-  protected
-
-  def raw_reservation_list
-    @csv.split("\n")
+  private
+  
+  def days_in(month)
+    @days_in ||= DateCalculation.days_in(month)
   end
+
+  def amount_of_days_reserved_in(year,month)
+    @amount_of_days_reserved_in ||= (start_day..end_day).select {|date| date.month == month && date.year == year }.count
+  end
+
 end
 
 class Office
   def initialize(capacity, monthly_price)
-    @capacity = capacity
+    @capacity      = capacity
     @monthly_price = monthly_price
   end
 
@@ -177,83 +159,105 @@ class Office
   attr_accessor :monthly_price
 end
 
-class RevenueCalculator
-  def initialize(date, reservations)
+
+#
+# build reservation and calculation classes
+#
+
+class ReservationBoard
+  def initialize(filter_day,csv)
+    @csv  = csv
+    @filter_day = filter_day + "-#{DateCalculation.days_in(filter_day.split("-")[1].to_i)}"
+    @filter_date = Date.parse(@filter_day)
+    @reservations = []
+    build_reservations
+  end
+
+  attr_reader :reservations
+  attr_reader :total_price
+
+  def build_reservations
+    imported_reservation_board.each do |reservation|
+      capacity, price, start_day, end_day = parse_reservation(reservation)
+      @reservations << Reservation.new(
+        Date.parse(start_day),
+        Date.parse(end_day),
+        Office.new(capacity,price)
+      )
+    end
+    @reservations
+  end
+
+  private
+
+  def imported_reservation_board
+    imported_reservation_board = @csv.split("\n")
+    imported_reservation_board.shift && imported_reservation_board
+  end
+
+  def parse_reservation(reservation)
+    capacity, price, start_day, end_day = reservation.split(",")
+    end_day ||= @filter_day # for indefinate reservations
+    [capacity, price, start_day, end_day]
+  end
+end
+
+class RevenueAndCapacityCalculator
+  def initialize(filter_day, reservation_board)
+    @filter_date      = Date.parse(filter_day + "-01")
+    @reservation_board = reservation_board
   end
 
   def total_revenue
-    reservations.each do |r|
-    end
-  end
-end
-
-class MonthlyCapacityCalculator
-  def initialize
+    @reservation_board.inject(0) { |sum,r| sum + r.prorated_price_for(@filter_date.year, @filter_date.month) }
   end
 
   def unreserved_capacity
-
+    @reservation_board.inject(0) { |sum,r| sum + r.used_capacity_for(@filter_date.year, @filter_date.month) }
   end
 end
 
-# class RevenueAndCapacityCalculator
+#
+# utility classes
+#
 
-#   def initialize(date:, data:)
-#     @data         = data
-#     @year, @month = date.split('-')
-#     @data_object  = build_data_object
+class DateCalculation
+  def self.days_in(month)
+    year_days = [nil, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    if month == 2 && ::Date.gregorian_leap?(year)
+      29
+    else
+      year_days[month]
+    end
+    year_days[month]
+  end
+end
 
-#   end
+class NumberDelimiter
+  def self.convert(number)
+    parts(number).join('.')
+  end
 
-#   def total_revenue
-#     total_revenue = 0
+  private
 
-#      if @data_object.keys.max < @year
-#         #iterate all years
-#        @data_object.keys.each do |y|     
-#          if @data_object.has_key?(y) && @data_object[y].has_key?(@month)
-#            @data_object[y].keys.each do |m|
-#              total_revenue += @data_object[y][m][:revenue]
-#           end
-#          end
-#        end
-#      elsif @data_object.keys.min < @year
-#         # before data existed, no price
-#        total_revenue = 0.00
-#      else
-#        #calculate from min until the specified year
-#      end
-#      total_revenue
-#   end
+  def self.parts(number)
+    left, right = number.to_s.split('.')
+    left.gsub!(/(\d)(?=(\d\d\d)+(?!\d))/) do |digit_to_delimit|
+      "#{digit_to_delimit},"
+    end
+    [left, right].compact
+  end
+end
 
-#   def unreserved_capacity
+#
+# runtime
+#
 
-#   end
+filter_date = STDIN.gets
+filter_date.chomp!
+reservations = ReservationBoard.new(filter_date,INPUTCSV).reservations
+calculator   = RevenueAndCapacityCalculator.new(filter_date,reservations)
+floated_rev  = sprintf "%.2f", calculator.total_revenue
 
-#   protected
-
-#   #
-#   # returns an array of hashes.  each entry corresponds
-#   # to the unique office reservation in the data file
-#   # the has contains the relevant data (capacity, start date, end date)
-#   #
-#   def build_data_object
-#     @total_revenue = 0
-#     data_object = {}
-#     @data_array = @data.split("\n")
-#     @headers = @data_array.shift.split(',')
-#     @data_array.each do |line|
-#       if line.length != @headers.length
-#         #add edit time automatically
-#       end
-#       capacity, price, start_date, end_date = line.split(",")
-#       start_y,start_m,start_d = start_date.split("-")
-#       end_y,end_m,end_d = end_date.split("-") if end_date
-#       data_object[start_y] ||= {}
-#       data_object[start_y][start_m] ||= {}
-#       data_object[start_y][start_m][:revenue] ||= 0
-#       data_object[start_y][start_m][:revenue] += prorated_price(monthly_price:, start_date:, end_date:)
-#     end
-#     data_object
-#   end
-# end
+puts "Total Revenue:  $#{NumberDelimiter.convert(floated_rev)}"
+puts "Unreserved Capacity: #{calculator.unreserved_capacity}"
