@@ -252,7 +252,6 @@ end
 #
 # runtime
 #
-
 filter_date = STDIN.gets
 filter_date.chomp!
 reservations = ReservationBoard.new(filter_date,INPUTCSV).reservations
