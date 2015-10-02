@@ -10,16 +10,16 @@ class Stats
   end
 
   def run_stats
-  	@stats.any? ? run_selected_stats : run_all_stats
+    @stats.any? ? run_selected_stats : run_all_stats
   end
 
   def run_selected_stats
-  	@stats.each { |stat| send("set_#{stat}".to_sym) }
+    @stats.each { |stat| send("set_#{stat}".to_sym) }
   end
 
   def run_all_stats
-  	setter_methods = methods.grep /set_/
-  	setter_methods.each do |method|
+    setter_methods = methods.grep /set_/
+    setter_methods.each do |method|
       send(method)
     end
   end
@@ -31,7 +31,7 @@ class Stats
   def set_stat_one
     @stat_one = 1000
   end
-  
+
   def set_stat_two
     @stat_two = 2000
   end
