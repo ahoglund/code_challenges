@@ -1,11 +1,11 @@
-require 'parenthesis_matcher'
+require 'parentheses_matcher'
 
-RSpec.describe ParenthesisMatcher do 
+RSpec.describe ParenthesesMatcher do 
 
   describe "#match" do 
-    context "position not a parenthesis" do
+    context "position not a parentheses" do
  
-      let(:matcher) { ParenthesisMatcher.new("doesnt matter",2) }
+      let(:matcher) { ParenthesesMatcher.new("doesnt matter",2) }
 
       it "raises an error" do 
         expect {
@@ -14,9 +14,9 @@ RSpec.describe ParenthesisMatcher do
       end
     end
 
-    context "string with unbalanced parenthesis" do
+    context "string with unbalanced parentheses" do
 
-      let(:matcher) { ParenthesisMatcher.new("()))(",1) }
+      let(:matcher) { ParenthesesMatcher.new("()))(",1) }
 
       it "raises an error" do 
         expect {
@@ -25,24 +25,24 @@ RSpec.describe ParenthesisMatcher do
       end
     end
 
-    context "string with balanced parenthesis" do
+    context "string with balanced parentheses" do
       it "should return 6" do 
-        matcher = ParenthesisMatcher.new("(asdf)",1)
+        matcher = ParenthesesMatcher.new("(asdf)",1)
         expect(matcher.match).to eq 6
       end
 
       it "should return 4" do 
-        matcher = ParenthesisMatcher.new("(())",1)
+        matcher = ParenthesesMatcher.new("(())",1)
         expect(matcher.match).to eq 4
       end
 
       it "should return 15" do 
-        matcher = ParenthesisMatcher.new("()()()()()()(())",14)
+        matcher = ParenthesesMatcher.new("()()()()()()(())",14)
         expect(matcher.match).to eq 15
       end
 
       it "should return 24" do 
-        matcher = ParenthesisMatcher.new("((()()()()()()()()((()))()()()()))",19)
+        matcher = ParenthesesMatcher.new("((()()()()()()()()((()))()()()()))",19)
         expect(matcher.match).to eq 24
       end
     end
