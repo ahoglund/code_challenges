@@ -35,6 +35,8 @@ class ParenthesesMatcher
   end
 
   def unbalanced?
+    # dont like that im going over the array twice, once here and then in the finder.  should 
+    # merge both algos into one.
     parentheses_stack = []
     split_string.each {|c| c == "(" ? parentheses_stack << c : c == ")" ? parentheses_stack.pop : nil }
     parentheses_stack.any?

@@ -45,6 +45,11 @@ RSpec.describe ParenthesesMatcher do
         matcher = ParenthesesMatcher.new("((()()()()()()()()((()))()()()()))",19)
         expect(matcher.match).to eq 24
       end
+
+      it "should return 24" do 
+        matcher = ParenthesesMatcher.new("(((())))(((())))(((())))()",25)
+        expect(matcher.match).to eq 26
+      end
     end
   end
 end
