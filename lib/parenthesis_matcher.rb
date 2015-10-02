@@ -14,6 +14,27 @@ class ParenthesesMatcher
 
   private 
   
+  # def matched(string)
+  #   stack = []
+  #   balanced = true
+  #   index = 0
+  #   while index < string.length && balanced do
+  #     symbol = string[index]
+  #     if symbol == "("
+  #       stack.push(symbol)
+  #     else
+  #       if stack.empty?
+  #         balanced = false
+  #       else
+  #         stack.pop
+  #       end
+  #     end
+  #     index += 1
+  #   end
+
+  #   balanced && s.empty? ? true : false
+  # end
+
   def find_matching_parentheses(level, match_level)
       split_string.each_with_index do |c,i| 
       if c == "("
