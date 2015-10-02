@@ -1,41 +1,37 @@
 class ParenthesisMatcher
 
-  attr_accessor :string
-  attr_accessor :start_parenthesis_position
+  def initialize(string, start_parenthesis_position)
+    @string = string
+    @start_parenthesis_position = start_parenthesis_position - 1
+
+    raise "Not a starting parenthesis" unless given_a_starting_parenthesis?
+    raise "Unbalanced parenthesis" if unbalanced?
+  end
 
   def match
-  	raise "Unbalanced parenthesis" if unbalanced?
-  	raise "Not a starting parenthesis" unless given_a_starting_parenthesis?
-
-    level = 0
-    start_level = 0
-    end_parenthesis_position = 0
-    
-    string.split("").each_with_index do |c,i| 
-    	if c == "("
-        if i == start_parenthesis_position - 1
-          start_level = level
-        end
-        level += 1 
-    	elsif c == ")"
-        level -= 1
-        if level == start_level && i >= start_parenthesis_position - 1
-        	end_parenthesis_position = i + 1
-        	break
-        end
-	    end
-    end
-    end_parenthesis_position
+    find_matching_parenthesis(0,0)
   end
 
   private 
+  
+  def find_matching_parenthesis(level, match_level)
+      split_string.each_with_index do |c,i| 
+      if c == "("
+        match_level = level if i == @start_parenthesis_position
+        level += 1 
+      elsif c == ")"
+        level -= 1
+        return i + 1 if level == match_level && i >= @start_parenthesis_position
+      end
+    end
+  end
 
   def split_string
-  	@split_string ||= string.split("")
+  	@split_string ||= @string.split("")
   end
 
   def given_a_starting_parenthesis?
-   split_string[start_parenthesis_position - 1] == "("
+   split_string[@start_parenthesis_position] == "("
   end
 
   def unbalanced?
