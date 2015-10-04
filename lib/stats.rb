@@ -2,9 +2,9 @@ module Statistics
  
   def all
     {
-      :two_plus_two =>     Proc.new { 2 + 2 },
-      :four_plus_four =>   Proc.new { 4 + 4 },
-      :three_times_two =>  Proc.new { 3 * 2 }
+      two_plus_two:     Proc.new { 2 + 2 },
+      four_plus_four:   Proc.new { 4 + 4 },
+      three_times_two:  Proc.new { 3 * 2 }
     }
   end
 
