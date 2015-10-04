@@ -1,4 +1,4 @@
-require 'parenthesis_matcher'
+require 'parentheses_matcher'
 
 RSpec.describe ParenthesesMatcher do 
 
